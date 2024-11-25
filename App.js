@@ -107,13 +107,23 @@ const getMovieByName = async (movieName) => {
       console.log(error);
     }
   };
+
 const fetchWishListMovie = async ()=>{
     moviesList.innerHTML = " ";
     const movieNamesList = getMovieNameFromLocalStorage();
-    for(let i=0; i<movieNamesList.length; i++){
-        const movieName = movieNamesList[i];
-        let movieDataFromName = await getMovieByName(movieName);
-        showFavorites(movieDataFromName);
+
+    if(movieNamesList.length > 0){
+        for(let i=0; i<movieNamesList.length; i++){
+            const movieName = movieNamesList[i];
+            let movieDataFromName = await getMovieByName(movieName);
+            showFavorites(movieDataFromName);
+        }
+    }else{
+      const para =  document.createElement("p");
+       para.innerHTML = "Your favorites list is empty! Browse and tap the heart to add items here.";
+       para.classList.add("favorite-tab-msg");
+       moviesList.appendChild(para);
+
     }
 }
 
@@ -147,24 +157,26 @@ let firstSortByRating = true;
 let SortByRatingButton = document.getElementById("sort-by-rating");
 SortByRatingButton.addEventListener('click', sortByRating);
 function sortByRating(){
-    let sortedMovies;
-    if(firstSortByRating){
-        //sorting rating by least to most
-        sortedMovies = movies.sort((a,b)=>  a.vote_average - b.vote_average);
-        SortByRatingButton.innerText = "Sort by rating(most to least)";
-        SortByRatingButton.style.backgroundColor = "#333";
-        SortByRatingButton.style.color = "white";
-        firstSortByRating = false;
+    if(allTab.classList.contains("active-tab")){
+        let sortedMovies;
+        if(firstSortByRating){
+            //sorting rating by least to most
+            sortedMovies = movies.sort((a,b)=>  a.vote_average - b.vote_average);
+            SortByRatingButton.innerText = "Sort by rating(most to least)";
+            SortByRatingButton.style.backgroundColor = "#333";
+            SortByRatingButton.style.color = "white";
+            firstSortByRating = false;
+        }
+        else if(!firstSortByRating){
+            // sorting rating by most to least
+            sortedMovies = movies.sort((a,b)=>b.vote_average - a.vote_average );
+            SortByRatingButton.innerText = "Sort by rating(least to most)";
+            SortByRatingButton.style.removeProperty("background-color");
+            SortByRatingButton.style.removeProperty("color");
+            firstSortByRating = true;
+        }
+        renderMovies(sortedMovies);  
     }
-    else if(!firstSortByRating){
-        // sorting rating by most to least
-        sortedMovies = movies.sort((a,b)=>b.vote_average - a.vote_average );
-        SortByRatingButton.innerText = "Sort by rating(least to most)";
-        SortByRatingButton.style.removeProperty("background-color");
-        SortByRatingButton.style.removeProperty("color");
-        firstSortByRating = true;
-    }
-    renderMovies(sortedMovies);  
 }
 
 //2.handling buttons sortByDate
@@ -172,24 +184,27 @@ let firstSortByDate = true;
 let SortByDateButton = document.getElementById("sort-by-date");
 SortByDateButton.addEventListener('click', sortByDate);
 function sortByDate(){
-    let sortedMovies;
-    if(firstSortByDate){
-        //sorting date by oldest to latest
-        sortedMovies = movies.slice().sort((a,b)=>  new Date(a.release_date) - new Date(b.release_date));
-        SortByDateButton.innerText = "Sort by date(oldest to latest)";
-        SortByDateButton.style.backgroundColor = "#333";
-        SortByDateButton.style.color = "white";
-        firstSortByDate = false;
+    if(allTab.classList.contains("active-tab")){
+
+        let sortedMovies;
+        if(firstSortByDate){
+            //sorting date by oldest to latest
+            sortedMovies = movies.slice().sort((a,b)=>  new Date(a.release_date) - new Date(b.release_date));
+            SortByDateButton.innerText = "Sort by date(oldest to latest)";
+            SortByDateButton.style.backgroundColor = "#333";
+            SortByDateButton.style.color = "white";
+            firstSortByDate = false;
+        }
+        else if(!firstSortByDate){
+            // sorting date by latest to oldest
+            sortedMovies = movies.sort((a,b)=>new Date(b.release_date) - new Date(a.release_date) );
+            SortByDateButton.innerText = "Sort by date(latest to oldest)";
+            SortByDateButton.style.removeProperty("background-color");
+            SortByDateButton.style.removeProperty("color");
+            firstSortByDate = true;
+        }
+        renderMovies(sortedMovies);  
     }
-    else if(!firstSortByDate){
-        // sorting date by latest to oldest
-        sortedMovies = movies.sort((a,b)=>new Date(b.release_date) - new Date(a.release_date) );
-        SortByDateButton.innerText = "Sort by date(latest to oldest)";
-        SortByDateButton.style.removeProperty("background-color");
-        SortByDateButton.style.removeProperty("color");
-        firstSortByDate = true;
-    }
-    renderMovies(sortedMovies);  
 }
 
 //pagination section
@@ -251,15 +266,26 @@ const pagination = document.getElementById("pagination");
 // 1.searching movie on search button click
 searchButton.addEventListener('click', ()=>{    
     let searchedMovie = searchInput.value;
+    if(favoriteTab.classList.contains("active-tab")){
+        console.log("yes");
+        favoriteTab.classList.remove("active-tab");
+        allTab.classList.add("active-tab");
+    }
     searchMovie(searchedMovie);
     pagination.style.display = "none"
 })
 
 const onSearchChange = async (event)=>{
     const {value} = event.target;
-    if(!value){
+
+    if(!value && !favoriteTab.classList.contains("active-tab")){
         renderMovies(movies);
     }else{
+        if(favoriteTab.classList.contains("active-tab")){
+            console.log("yes");
+            favoriteTab.classList.remove("active-tab");
+            allTab.classList.add("active-tab");
+        }
         await searchMovie(value);
     }
 }
